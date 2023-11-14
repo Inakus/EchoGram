@@ -1,31 +1,33 @@
 import { z } from "zod";
+import { User, clerkClient } from "@clerk/nextjs/server";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
+const filterUserForClient = (user: User) => {
+  return {
+    id: user.id,
+    username: user.username,
+    profileImageUrl: user.imageUrl,
+  }
+}
+
+
 export const postRouter = createTRPCRouter({
-  hello: protectedProcedure
-    .query(({ ctx }) => {
-      return {
-        greeting: `Hello ${ctx.auth?.userId}`,
-      };
-    }),
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    const posts = await ctx.db.post.findMany({
+      take: 10
+    })
 
-  create: publicProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    const users = (await clerkClient.users.getUserList({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      userId: posts.map(post => post.userId),
+      limit: 10
+    })).map(filterUserForClient)
 
-      return ctx.db.post.create({
-        data: {
-          name: input.name,
-        },
-      });
-    }),
 
-  getLatest: publicProcedure.query(({ ctx }) => {
-    return ctx.db.post.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-  }),
+    return posts.map(post => ({
+      post,
+      author: users.find(user => user.id === post.userId)
+    }))
+  })
 });

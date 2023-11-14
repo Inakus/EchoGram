@@ -7,11 +7,6 @@ import { api } from "~/utils/api";
 
 export default function Home() {
   const [image, setImage] = useState<string>();
-  const user = useUser();
-  const hello = api.post.hello.useQuery();
-
-  console.log(user);
-  console.log(hello);
 
   return (
     <>
