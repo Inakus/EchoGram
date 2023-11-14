@@ -1,14 +1,17 @@
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useAuth, useUser } from "@clerk/nextjs";
 import { UploadButton } from "@uploadthing/react";
 import { useState } from "react";
 
 import type { OurFileRouter } from "~/server/uploadthing";
-
 import { api } from "~/utils/api";
 
 export default function Home() {
-  const hello = api.post.hello.useQuery({ text: "from tRPC" });
   const [image, setImage] = useState<string>();
+  const user = useUser();
+  const hello = api.post.hello.useQuery();
+
+  console.log(user);
+  console.log(hello);
 
   return (
     <>
@@ -29,11 +32,9 @@ export default function Home() {
         }}
         onUploadError={(error: Error) => {
           // Do something with the error.
-          alert(`ERROR! ${error.message}`);
+          console.log(`ERROR! ${error.message}`);
         }}
       />
-
-      <img src={image} alt="test" />
     </>
   );
 }
